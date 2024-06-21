@@ -12,12 +12,15 @@ const (
 
 	fsDir = "."
 
+	dbFilename = "database.json"
+
 	fsPath           = "/app/*"
 	readinessPath    = "GET /api/healthz"
 	metricsPath      = "GET /admin/metrics"
 	resetMetricsPath = "GET /api/reset"
 	postChirpPath    = "POST /api/chirps"
 	getChirpPath     = "GET /api/chirps"
+	getChirpIdPath   = "GET /api/chirps/{chirpId}"
 )
 
 type apiConfig struct {
@@ -31,7 +34,7 @@ func setupLogFlags() {
 func main() {
 	setupLogFlags()
 
-	db, err := database.NewDB("database.json")
+	db, err := database.NewDB(dbFilename)
 
 	if err != nil {
 		log.Fatalf("Error creating database: %q", err)
@@ -52,6 +55,7 @@ func main() {
 	mux.HandleFunc(resetMetricsPath, apiConfig.metricsReseter)
 	mux.HandleFunc(postChirpPath, apiConfig.postChirpHandler)
 	mux.HandleFunc(getChirpPath, apiConfig.getChirpHandler)
+	mux.HandleFunc(getChirpIdPath, apiConfig.chirpIdGetHandler)
 
 	log.Printf("Registered file handler for dir %q on path %q", fsDir, fsPath)
 	log.Printf("Registered readiness endpoint on path %q", readinessPath)
@@ -59,6 +63,7 @@ func main() {
 	log.Printf("Registered reset metrics endpoint on path %q", resetMetricsPath)
 	log.Printf("Registered POST chirps endpoint on path %q", postChirpPath)
 	log.Printf("Registered GET chirps endpoint on path %q", getChirpPath)
+	log.Printf("Registered GET chirp by id endpoint on path %q", getChirpIdPath)
 
 	server := &http.Server{
 		Addr:    port,

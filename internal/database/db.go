@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -78,6 +79,24 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 	}
 
 	return chirps, nil
+}
+
+func (db *DB) ChirpById(id int) (Chirp, error) {
+
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		log.Printf("Could not load database file to retrieve chirps: %q", err)
+		return Chirp{}, err
+	}
+
+	chirp, exists := dbStructure.Chirps[id]
+
+	if !exists {
+		log.Printf("Chirp with id %d does not exist in database", id)
+		return Chirp{}, fmt.Errorf("chirp with id %d does not exist", id)
+	}
+
+	return chirp, nil
 }
 
 func (db *DB) ensureDB() error {
