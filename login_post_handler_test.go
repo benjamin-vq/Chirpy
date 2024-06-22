@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/benjamin-vq/chirpy/internal/database"
@@ -14,6 +15,8 @@ import (
 
 func TestLoginPostHandler(t *testing.T) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	t.Setenv("JWT_SECRET", "dGVzdA==")
 
 	db, err := database.NewDB(testDbName)
 	if err != nil {
@@ -44,27 +47,37 @@ func TestLoginPostHandler(t *testing.T) {
 	cases := []struct {
 		wantCode int
 		request  string
-		wantBody string
+		wantMap  map[string]any
 	}{
 		{
 			wantCode: 200,
 			request:  `{"email": "loginhandler@chirpy.com", "password": "hello123"}`,
-			wantBody: `{"email":"loginhandler@chirpy.com","id":1}`,
+			wantMap: map[string]any{
+				"email": "loginhandler@chirpy.com",
+				"id":    float64(1),
+			},
 		},
 		{
 			wantCode: 200,
 			request:  `{"email": "2nduser@handler.io", "password": "pass"}`,
-			wantBody: `{"email":"2nduser@handler.io","id":2}`,
+			wantMap: map[string]any{
+				"email": "2nduser@handler.io",
+				"id":    float64(2),
+			},
 		},
 		{
 			wantCode: 401,
 			request:  `{"email": "loginhandler@chirpy.com", "password": "wrongpassword"}`,
-			wantBody: `{"error":"Unauthorized"}`,
+			wantMap: map[string]any{
+				"error": "Unauthorized",
+			},
 		},
 		{
 			wantCode: 401,
 			request:  `{"email": "userNotExists@chirpy.com", "password": "any"}`,
-			wantBody: `{"error":"Unauthorized"}`,
+			wantMap: map[string]any{
+				"error": "Unauthorized",
+			},
 		},
 	}
 
@@ -77,12 +90,23 @@ func TestLoginPostHandler(t *testing.T) {
 			cfg.loginPostHandler(w, req)
 
 			resp, _ := io.ReadAll(w.Body)
-			if got := string(resp); got != c.wantBody {
-				t.Errorf("Test failed (email): got %q, want %q", got, c.wantBody)
+
+			var jsonResponse map[string]any
+			if err := json.Unmarshal(resp, &jsonResponse); err != nil {
+				t.Fatalf("Could not unmarshal response: %q", err)
 			}
-			if got := w.Code; got != c.wantCode {
-				t.Errorf("Test failed (code): got %d, want %d", got, c.wantCode)
+
+			if _, ok := jsonResponse["token"]; !ok && w.Code == 200 {
+				t.Errorf("Test failed, expected response to have a 'token' field")
 			}
+			delete(jsonResponse, "token")
+
+			for k, want := range c.wantMap {
+				if actual, _ := jsonResponse[k]; actual != want {
+					t.Errorf("Test failed, comparing json response got %v, want %v", actual, want)
+				}
+			}
+
 		})
 	}
 

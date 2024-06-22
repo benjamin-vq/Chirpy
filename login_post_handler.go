@@ -7,15 +7,18 @@ import (
 	"github.com/benjamin-vq/chirpy/internal/database"
 	"log"
 	"net/http"
+	"time"
 )
 
 type LoginParams struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Expires  int    `json:"expires_in_seconds"`
 }
 
 type LoginResponse struct {
 	User
+	Token string `json:"token"`
 }
 
 func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,9 +52,17 @@ func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jwt, err := auth.CreateJwt(time.Duration(loginParams.Expires), user.Id)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not login")
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, LoginResponse{
 		User: User{
 			user.Email,
 			user.Id,
-		}})
+		},
+		Token: jwt,
+	})
 }

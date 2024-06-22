@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"github.com/benjamin-vq/chirpy/internal/assert"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
@@ -34,6 +35,7 @@ var debug = flag.Bool("debug", false, "Start on debug mode")
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
 
 func setupFlags() {
@@ -45,6 +47,9 @@ func setupFlags() {
 		err := os.Remove(dbFilename)
 		assert.That(err == nil || errors.Is(err, os.ErrNotExist), "[DEBUG] Could not delete database file: %q", err)
 	}
+
+	err := godotenv.Load()
+	assert.That(err == nil, "Could not load environment variables")
 }
 func main() {
 	setupFlags()
@@ -54,10 +59,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating database: %q", err)
 	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	assert.That(jwtSecret != "", "Jwt Secret should not be empty")
 
 	apiConfig := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		jwtSecret:      jwtSecret,
 	}
 
 	mux := http.NewServeMux()
