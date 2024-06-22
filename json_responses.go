@@ -8,6 +8,10 @@ import (
 	"github.com/benjamin-vq/chirpy/internal/assert"
 )
 
+type errorResponse struct {
+	Error string `json:"error,omitempty"`
+}
+
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	errorResponse := errorResponse{}
 
@@ -16,7 +20,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 
 	if err != nil {
 		log.Printf("Error mashalling error response: %q", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -32,7 +36,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 
 	if err != nil {
 		log.Printf("Error mashalling chirp: %q", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

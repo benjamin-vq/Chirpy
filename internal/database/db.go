@@ -21,8 +21,14 @@ type Chirp struct {
 	Id   int    `json:"id"`
 }
 
+type User struct {
+	Email string `json:"email"`
+	Id    int    `json:"id"`
+}
+
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users  map[int]User  `json:"users"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -53,7 +59,7 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 		Body: body,
 		Id:   chirpId,
 	}
-	assert.That(dbStructure.Chirps != nil, "Chirp map should be initialized")
+	assert.That(dbStructure.Chirps != nil, "Chirps map should be initialized")
 	dbStructure.Chirps[chirpId] = chirp
 
 	err = db.writeDB(dbStructure)
@@ -99,6 +105,35 @@ func (db *DB) ChirpById(id int) (Chirp, error) {
 	return chirp, nil
 }
 
+func (db *DB) CreateUser(email string) (User, error) {
+
+	assert.That(email != "", "email can not be empty")
+
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		log.Printf("Could not load database file to retrieve users: %q", err)
+		return User{}, err
+	}
+
+	userId := len(dbStructure.Users) + 1
+	user := User{
+		email,
+		userId,
+	}
+
+	assert.That(dbStructure.Users != nil, "Users map should be initialized")
+	dbStructure.Users[userId] = user
+	err = db.writeDB(dbStructure)
+
+	if err != nil {
+		log.Printf("Could not write database to save new user: %q", err)
+		return User{}, err
+	}
+
+	log.Printf("Succesfully created user with id %d to database", user.Id)
+	return user, nil
+}
+
 func (db *DB) ensureDB() error {
 	_, err := os.ReadFile(db.path)
 
@@ -106,6 +141,7 @@ func (db *DB) ensureDB() error {
 		log.Printf("Database file does not exist, ensuring it exists by creating it")
 		dbStructure := DBStructure{
 			Chirps: make(map[int]Chirp),
+			Users:  make(map[int]User),
 		}
 		db.writeDB(dbStructure)
 		return nil

@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-type errorResponse struct {
-	Error string `json:"error,omitempty"`
-}
-
 func (cfg *apiConfig) postChirpHandler(w http.ResponseWriter, r *http.Request) {
 
 	type chirpParams struct {

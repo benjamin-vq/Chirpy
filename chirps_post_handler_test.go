@@ -45,7 +45,7 @@ func TestPostChirpHandler(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		t.Run(fmt.Sprintf("Validation Handler Test Case %d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Chirps Post Handler Test Case %d", i), func(t *testing.T) {
 
 			db, err := database.NewDB(testDbName)
 			if err != nil {
