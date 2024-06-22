@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -14,6 +15,15 @@ import (
 
 func TestGetChirpIdHandler(t *testing.T) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	db, err := database.NewDB(testDbName)
+	if err != nil {
+		log.Fatalf("Could not create new database for test: %q", err)
+	}
+
+	cfg := apiConfig{
+		DB: db,
+	}
 
 	cases := []struct {
 		code int
@@ -39,14 +49,6 @@ func TestGetChirpIdHandler(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Chirp by Id Handler Test Case %d", i), func(t *testing.T) {
-			db, err := database.NewDB(testDbName)
-			if err != nil {
-				log.Fatalf("Could not create new database for test case %d: %q", i, err)
-			}
-
-			cfg := apiConfig{
-				DB: db,
-			}
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("POST", "http://chirpy.com", strings.NewReader(`{"body":"A good chirp"}`))
@@ -68,11 +70,11 @@ func TestGetChirpIdHandler(t *testing.T) {
 				t.Errorf("Test failed (status code): got %d, want %d", got, c.code)
 
 			}
-
-			err = os.Remove(testDbName)
-			if err != nil {
-				t.Fatalf("Could not delete test database for next test: %q", err.Error())
-			}
 		})
+	}
+
+	err = os.Remove(testDbName)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Fatalf("Could not cleanup database file: %q", err)
 	}
 }

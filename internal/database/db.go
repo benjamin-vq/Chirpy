@@ -43,7 +43,8 @@ func (db *DB) ensureDB() error {
 			Chirps: make(map[int]Chirp),
 			Users:  make(map[int]User),
 		}
-		db.writeDB(dbStructure)
+		err := db.writeDB(dbStructure)
+		assert.That(err == nil, "Database could not be initialized: %q", err)
 		return nil
 	}
 

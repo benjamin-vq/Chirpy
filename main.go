@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"github.com/benjamin-vq/chirpy/internal/assert"
 	"log"
 	"net/http"
 	"os"
@@ -39,8 +41,9 @@ func setupFlags() {
 	flag.Parse()
 
 	if *debug {
-		log.Printf("[DEBUG] Deleting database file to start with a fresh one.")
-		os.Remove(dbFilename)
+		log.Printf("[DEBUG] Deleting database file to start with a fresh one")
+		err := os.Remove(dbFilename)
+		assert.That(err == nil || errors.Is(err, os.ErrNotExist), "[DEBUG] Could not delete database file: %q", err)
 	}
 }
 func main() {
