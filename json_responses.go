@@ -16,7 +16,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	errorResponse := errorResponse{}
 
 	errorResponse.Error = msg
-	json, err := json.Marshal(&errorResponse)
+	bytes, err := json.Marshal(&errorResponse)
 
 	if err != nil {
 		log.Printf("Error mashalling error response: %q", err)
@@ -26,13 +26,13 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(json)
+	w.Write(bytes)
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 	assert.That(code < 400, "Code should be in the 100-399 range")
 
-	json, err := json.Marshal(&payload)
+	bytes, err := json.Marshal(&payload)
 
 	if err != nil {
 		log.Printf("Error mashalling chirp: %q", err)
@@ -42,5 +42,5 @@ func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(json)
+	w.Write(bytes)
 }

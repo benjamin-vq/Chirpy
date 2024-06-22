@@ -3,7 +3,6 @@ package database
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -14,16 +13,6 @@ import (
 type DB struct {
 	path string
 	mu   *sync.RWMutex
-}
-
-type Chirp struct {
-	Body string `json:"body"`
-	Id   int    `json:"id"`
-}
-
-type User struct {
-	Email string `json:"email"`
-	Id    int    `json:"id"`
 }
 
 type DBStructure struct {
@@ -43,95 +32,6 @@ func NewDB(path string) (*DB, error) {
 	err := db.ensureDB()
 
 	return &db, err
-}
-
-func (db *DB) CreateChirp(body string) (Chirp, error) {
-
-	//assert.That(body != "", "Chirp body can not be empty")
-
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		return Chirp{}, err
-	}
-
-	chirpId := len(dbStructure.Chirps) + 1
-	chirp := Chirp{
-		Body: body,
-		Id:   chirpId,
-	}
-	assert.That(dbStructure.Chirps != nil, "Chirps map should be initialized")
-	dbStructure.Chirps[chirpId] = chirp
-
-	err = db.writeDB(dbStructure)
-	if err != nil {
-		log.Printf("Error writing database structure: %q", err)
-		return Chirp{}, err
-	}
-
-	return chirp, nil
-}
-
-func (db *DB) GetChirps() ([]Chirp, error) {
-
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		log.Printf("Could not load database file to retrieve chirps: %q", err)
-		return nil, err
-	}
-
-	chirps := make([]Chirp, 0, len(dbStructure.Chirps))
-	for _, v := range dbStructure.Chirps {
-		chirps = append(chirps, v)
-	}
-
-	return chirps, nil
-}
-
-func (db *DB) ChirpById(id int) (Chirp, error) {
-
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		log.Printf("Could not load database file to retrieve chirps: %q", err)
-		return Chirp{}, err
-	}
-
-	chirp, exists := dbStructure.Chirps[id]
-
-	if !exists {
-		log.Printf("Chirp with id %d does not exist in database", id)
-		return Chirp{}, fmt.Errorf("chirp with id %d does not exist", id)
-	}
-
-	return chirp, nil
-}
-
-func (db *DB) CreateUser(email string) (User, error) {
-
-	assert.That(email != "", "email can not be empty")
-
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		log.Printf("Could not load database file to retrieve users: %q", err)
-		return User{}, err
-	}
-
-	userId := len(dbStructure.Users) + 1
-	user := User{
-		email,
-		userId,
-	}
-
-	assert.That(dbStructure.Users != nil, "Users map should be initialized")
-	dbStructure.Users[userId] = user
-	err = db.writeDB(dbStructure)
-
-	if err != nil {
-		log.Printf("Could not write database to save new user: %q", err)
-		return User{}, err
-	}
-
-	log.Printf("Succesfully created user with id %d to database", user.Id)
-	return user, nil
 }
 
 func (db *DB) ensureDB() error {

@@ -22,13 +22,38 @@ func TestPostUsersHandler(t *testing.T) {
 	}{
 		{
 			code: 201,
-			body: `{"email": "myemail@chirpy.com"}`,
+			body: `{"email": "myemail@chirpy.com", "password": "test1234"}`,
 			want: `{"email":"myemail@chirpy.com","id":1}`,
 		},
 		{
+			code: 201,
+			body: `{"email": "another@email.io", "id": 5958, "password": "1234567890"}`,
+			want: `{"email":"another@email.io","id":1}`,
+		},
+		{
 			code: 400,
-			body: `{"email": ""}`,
-			want: `{"error":"Email can not be empty"}`,
+			body: `{"email": "", "password": "$!\"#ña!"}`,
+			want: `{"error":"email can not be empty"}`,
+		},
+		{
+			code: 400,
+			body: `{"email": "test@emails.org", "password": ""}`,
+			want: `{"error":"password can not be empty"}`,
+		},
+		{
+			code: 400,
+			body: `{"email": "", "password": ""}`,
+			want: `{"error":"email can not be empty"}`,
+		},
+		{
+			code: 400,
+			body: `{"email": "asdf"}`,
+			want: `{"error":"password can not be empty"}`,
+		},
+		{
+			code: 400,
+			body: `{"password": "hey"}`,
+			want: `{"error":"email can not be empty"}`,
 		},
 	}
 
