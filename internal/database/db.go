@@ -90,7 +90,7 @@ func (db *DB) writeDB(dbStructure DBStructure) error {
 		return err
 	}
 
-	log.Print("Succesfully wrote database structure to file")
+	log.Print("Successfully wrote database structure to file")
 	return nil
 
 }

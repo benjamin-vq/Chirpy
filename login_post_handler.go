@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/benjamin-vq/chirpy/internal/auth"
+	"github.com/benjamin-vq/chirpy/internal/database"
 	"log"
 	"net/http"
 )
@@ -31,6 +33,11 @@ func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := cfg.DB.UserByEmail(loginParams.Email)
 
 	if err != nil {
+		if errors.Is(err, database.UserNotExists) {
+			log.Printf("User with email %q does not exist %q", loginParams.Email, err)
+			respondWithError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
 		log.Printf("Error finding user by email: %q", err)
 		respondWithError(w, http.StatusInternalServerError, "Could not login")
 		return

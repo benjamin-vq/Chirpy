@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"github.com/benjamin-vq/chirpy/internal/assert"
 	"log"
 )
@@ -13,7 +12,8 @@ type User struct {
 	Id       int    `json:"id"`
 }
 
-var ErrEmailExists = fmt.Errorf("email already exists")
+var ErrEmailExists = errors.New("email already exists")
+var UserNotExists = errors.New("user does not exist")
 
 func (db *DB) CreateUser(email, password string) (User, error) {
 
@@ -65,5 +65,5 @@ func (db *DB) UserByEmail(email string) (User, error) {
 		}
 	}
 
-	return User{}, errors.New("user does not exist")
+	return User{}, UserNotExists
 }
