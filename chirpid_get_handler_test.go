@@ -24,6 +24,9 @@ func TestGetChirpIdHandler(t *testing.T) {
 	cfg := apiConfig{
 		DB: db,
 	}
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "http://chirpy.com", strings.NewReader(`{"body":"A good chirp"}`))
+	cfg.postChirpHandler(w, req)
 
 	cases := []struct {
 		code int
@@ -49,10 +52,6 @@ func TestGetChirpIdHandler(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Chirp by Id Handler Test Case %d", i), func(t *testing.T) {
-
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest("POST", "http://chirpy.com", strings.NewReader(`{"body":"A good chirp"}`))
-			cfg.postChirpHandler(w, req)
 
 			idW := httptest.NewRecorder()
 			idReq := httptest.NewRequest("GET", "/api/chirps/", nil)

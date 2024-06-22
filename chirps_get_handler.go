@@ -24,7 +24,14 @@ func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var httpStatus int
+	if len(chirps) != 0 {
+		httpStatus = http.StatusOK
+	} else {
+		httpStatus = http.StatusNoContent
+	}
+
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(httpStatus)
 	w.Write(data)
 }
