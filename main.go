@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/benjamin-vq/chirpy/internal/database"
 )
@@ -24,16 +26,24 @@ const (
 	postUsersPath    = "POST /api/users"
 )
 
+var debug = flag.Bool("debug", false, "Start on debug mode")
+
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
 }
 
-func setupLogFlags() {
+func setupFlags() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	flag.Parse()
+
+	if *debug {
+		log.Printf("[DEBUG] Deleting database file to start with a fresh one.")
+		os.Remove(dbFilename)
+	}
 }
 func main() {
-	setupLogFlags()
+	setupFlags()
 
 	db, err := database.NewDB(dbFilename)
 
