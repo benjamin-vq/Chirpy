@@ -35,7 +35,7 @@ func TestPostChirpHandler(t *testing.T) {
 		{
 			code: 400,
 			body: `{"body": "A really really long, omnipotent chirp, one may call it the best chirp. Capable of surpassing the longest of limits, beyond human imagination."}`,
-			want: `{"error":"Chirp length exceeds limit"}`,
+			want: `{"error":"chirp length exceeds limit"}`,
 		},
 		{
 			code: 500,

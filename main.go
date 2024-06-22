@@ -24,6 +24,7 @@ const (
 	getChirpPath     = "GET /api/chirps"
 	getChirpIdPath   = "GET /api/chirps/{chirpId}"
 	postUsersPath    = "POST /api/users"
+	loginPath        = "POST /api/login"
 )
 
 var debug = flag.Bool("debug", false, "Start on debug mode")
@@ -68,6 +69,7 @@ func main() {
 	mux.HandleFunc(getChirpPath, apiConfig.getChirpHandler)
 	mux.HandleFunc(getChirpIdPath, apiConfig.chirpIdGetHandler)
 	mux.HandleFunc(postUsersPath, apiConfig.postUsersHandler)
+	mux.HandleFunc(loginPath, apiConfig.loginPostHandler)
 
 	log.Printf("Registered file handler for dir %q on path %q", fsDir, fsPath)
 	log.Printf("Registered readiness endpoint on path %q", readinessPath)
@@ -77,6 +79,7 @@ func main() {
 	log.Printf("Registered GET chirps endpoint on path %q", getChirpPath)
 	log.Printf("Registered GET chirp by id endpoint on path %q", getChirpIdPath)
 	log.Printf("Registered POST users endpoint on path %q", postUsersPath)
+	log.Printf("Registered POST login endpoint on path %q", loginPath)
 
 	server := &http.Server{
 		Addr:    port,
