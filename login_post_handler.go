@@ -7,18 +7,17 @@ import (
 	"github.com/benjamin-vq/chirpy/internal/database"
 	"log"
 	"net/http"
-	"time"
 )
 
 type LoginParams struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Expires  int    `json:"expires_in_seconds"`
 }
 
 type LoginResponse struct {
 	User
-	Token string `json:"token"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,8 +52,22 @@ func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, err := auth.CreateJwt(time.Duration(loginParams.Expires)*time.Second, user.Id, cfg.jwtSecret)
+	jwt, err := auth.CreateJwt(user.Id, cfg.jwtSecret)
 	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not login")
+		return
+	}
+
+	rt, err := auth.GenerateRefreshToken()
+	if err != nil {
+		log.Printf("An error ocurred generating refresh token: %q", err)
+		respondWithError(w, http.StatusInternalServerError, "Could not login")
+		return
+	}
+
+	err = cfg.DB.SaveToken(user.Id, rt)
+	if err != nil {
+		log.Printf("Error saving token to database after login: %q", err)
 		respondWithError(w, http.StatusInternalServerError, "Could not login")
 		return
 	}
@@ -64,6 +77,7 @@ func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 			user.Email,
 			user.Id,
 		},
-		Token: jwt,
+		Token:        jwt,
+		RefreshToken: rt,
 	})
 }

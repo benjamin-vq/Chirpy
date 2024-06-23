@@ -29,6 +29,8 @@ const (
 	postUsersPath    = "POST /api/users"
 	loginPath        = "POST /api/login"
 	putUsersPath     = "PUT /api/users"
+	postRefreshPath  = "POST /api/refresh"
+	postRevokePath   = "POST /api/revoke"
 )
 
 var debug = flag.Bool("debug", false, "Start on debug mode")
@@ -83,6 +85,8 @@ func main() {
 	mux.HandleFunc(postUsersPath, apiConfig.postUsersHandler)
 	mux.HandleFunc(loginPath, apiConfig.loginPostHandler)
 	mux.HandleFunc(putUsersPath, apiConfig.putUsersHandler)
+	mux.HandleFunc(postRefreshPath, apiConfig.postRefreshHandler)
+	mux.HandleFunc(postRevokePath, apiConfig.postRevokeHandler)
 
 	log.Printf("Registered file handler for dir %q on path %q", fsDir, fsPath)
 	log.Printf("Registered readiness endpoint on path %q", readinessPath)
@@ -94,6 +98,8 @@ func main() {
 	log.Printf("Registered POST users endpoint on path %q", postUsersPath)
 	log.Printf("Registered PUT users endpoint on path %q", putUsersPath)
 	log.Printf("Registered POST login endpoint on path %q", loginPath)
+	log.Printf("Registered POST refresh endpoint on path %q", postRefreshPath)
+	log.Printf("Registered POST revoke endpoint on path %q", postRevokePath)
 
 	server := &http.Server{
 		Addr:    port,

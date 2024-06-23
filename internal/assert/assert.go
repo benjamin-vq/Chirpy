@@ -9,6 +9,7 @@ func That(condition bool, message string, args ...any) {
 	}
 }
 
+// NoError Error should be nil, otherwise the program could be in an invalid state, might as well panic.
 func NoError(err error, message string, args ...any) {
 	if err != nil {
 		log.Panicf(message, args)

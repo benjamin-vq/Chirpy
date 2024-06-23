@@ -98,7 +98,11 @@ func TestLoginPostHandler(t *testing.T) {
 			if _, ok := jsonResponse["token"]; !ok && w.Code == 200 {
 				t.Errorf("Test failed, expected response to have a 'token' field")
 			}
+			if _, ok := jsonResponse["refresh_token"]; !ok && w.Code == 200 {
+				t.Errorf("Test failed, expected response to have a 'refresh_token' field")
+			}
 			delete(jsonResponse, "token")
+			delete(jsonResponse, "refresh_token")
 
 			for k, want := range c.wantMap {
 				if actual, _ := jsonResponse[k]; actual != want {

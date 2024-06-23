@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
@@ -8,17 +10,13 @@ import (
 	"time"
 )
 
-func CreateJwt(expiration time.Duration, userId int, jwtSecret string) (string, error) {
+func CreateJwt(userId int, jwtSecret string) (string, error) {
 
-	if expiration == 0 || expiration > 24*time.Hour {
-		log.Printf("Jwt creation received an invalid expiration: %d. Defaulting to 24 hours", expiration)
-		expiration = 24 * time.Hour
-	}
-
+	const expireAfter = 1 * time.Hour
 	now := time.Now().UTC()
 
 	issuedAt := jwt.NewNumericDate(now)
-	expiresAt := jwt.NewNumericDate(now.Add(expiration))
+	expiresAt := jwt.NewNumericDate(now.Add(expireAfter))
 
 	claims := jwt.RegisteredClaims{
 		Issuer:    "chirpy",
@@ -28,16 +26,9 @@ func CreateJwt(expiration time.Duration, userId int, jwtSecret string) (string, 
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedJwt, err := token.SignedString([]byte(jwtSecret))
-
-	if err != nil {
-		log.Printf("Could not create signed JWT: %q", err)
-		return "", err
-	}
 	log.Printf("Issued a new token at %v. Expires at %v", issuedAt, expiresAt)
 
-	return signedJwt, nil
+	return token.SignedString([]byte(jwtSecret))
 }
 
 func ValidateToken(token, jwtSecret string) (string, error) {
@@ -74,4 +65,16 @@ func ValidateToken(token, jwtSecret string) (string, error) {
 	}
 
 	return subject, nil
+}
+
+func GenerateRefreshToken() (string, error) {
+
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		log.Printf("Could not generate refresh token: %q", err)
+		return "", err
+	}
+
+	return hex.EncodeToString(bytes), nil
 }
