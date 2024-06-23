@@ -78,3 +78,30 @@ func GenerateRefreshToken() (string, error) {
 
 	return hex.EncodeToString(bytes), nil
 }
+
+func UserIdFromToken(token, jwtSecret string) (userId int, err error) {
+
+	claims := jwt.RegisteredClaims{}
+	parsedJwt, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (any, error) {
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil {
+		log.Printf("Could not parse token: %q", err)
+		return 0, err
+	}
+
+	subject, err := parsedJwt.Claims.GetSubject()
+	if err != nil {
+		log.Printf("Could not get subject in parsed token: %q", err)
+		return 0, err
+	}
+
+	userId, err = strconv.Atoi(subject)
+	if err != nil {
+		log.Printf("Invalid subject in token: %q", err)
+		return 0, err
+	}
+
+	return userId, nil
+}

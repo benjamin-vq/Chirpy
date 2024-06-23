@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,8 +25,26 @@ func TestGetChirpIdHandler(t *testing.T) {
 	cfg := apiConfig{
 		DB: db,
 	}
+
+	user := `{"email": "newuser@chirpy.com", "password": "hey!"}`
+	createW := httptest.NewRecorder()
+	createReq := httptest.NewRequest("POST", "/api/users", strings.NewReader(user))
+	cfg.postUsersHandler(createW, createReq)
+
+	loginRequest := `{"email": "newuser@chirpy.com", "password": "hey!"}`
+	loginW := httptest.NewRecorder()
+	loginReq := httptest.NewRequest("POST", "/api/login", strings.NewReader(loginRequest))
+	cfg.loginPostHandler(loginW, loginReq)
+
+	loginResp := map[string]string{}
+	decoder := json.NewDecoder(loginW.Body)
+	err = decoder.Decode(&loginResp)
+
+	token, _ := loginResp["token"]
+
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "http://chirpy.com", strings.NewReader(`{"body":"A good chirp"}`))
+	req.Header.Add("Authorization", "Bearer "+token)
 	cfg.postChirpHandler(w, req)
 
 	cases := []struct {
@@ -36,7 +55,7 @@ func TestGetChirpIdHandler(t *testing.T) {
 		{
 			code: 200,
 			id:   "1",
-			want: `{"body":"A good chirp","id":1}`,
+			want: `{"body":"A good chirp","id":1,"author_id":1}`,
 		},
 		{
 			code: 400,

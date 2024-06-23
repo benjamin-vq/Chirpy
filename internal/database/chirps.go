@@ -7,13 +7,15 @@ import (
 )
 
 type Chirp struct {
-	Body string `json:"body"`
-	Id   int    `json:"id"`
+	Body     string `json:"body"`
+	Id       int    `json:"id"`
+	AuthorId int    `json:"author_id"`
 }
 
-func (db *DB) CreateChirp(body string) (Chirp, error) {
+func (db *DB) CreateChirp(body string, authorId int) (Chirp, error) {
 
 	//assert.That(body != "", "Chirp body can not be empty")
+	assert.That(authorId != 0, "Should provide a valid author id")
 
 	dbStructure, err := db.loadDB()
 	if err != nil {
@@ -22,8 +24,9 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 
 	chirpId := len(dbStructure.Chirps) + 1
 	chirp := Chirp{
-		Body: body,
-		Id:   chirpId,
+		Body:     body,
+		Id:       chirpId,
+		AuthorId: authorId,
 	}
 	assert.That(dbStructure.Chirps != nil, "Chirps map should be initialized")
 	dbStructure.Chirps[chirpId] = chirp

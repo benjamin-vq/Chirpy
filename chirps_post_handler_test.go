@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -27,6 +28,22 @@ func TestPostChirpHandler(t *testing.T) {
 		DB: db,
 	}
 
+	user := `{"email": "newuser@chirpy.com", "password": "hey!"}`
+	createW := httptest.NewRecorder()
+	createReq := httptest.NewRequest("POST", "/api/users", strings.NewReader(user))
+	cfg.postUsersHandler(createW, createReq)
+
+	loginRequest := `{"email": "newuser@chirpy.com", "password": "hey!"}`
+	loginW := httptest.NewRecorder()
+	loginReq := httptest.NewRequest("POST", "/api/login", strings.NewReader(loginRequest))
+	cfg.loginPostHandler(loginW, loginReq)
+
+	loginResp := map[string]string{}
+	decoder := json.NewDecoder(loginW.Body)
+	err = decoder.Decode(&loginResp)
+
+	token, _ := loginResp["token"]
+
 	cases := []struct {
 		code int
 		body string
@@ -35,12 +52,12 @@ func TestPostChirpHandler(t *testing.T) {
 		{
 			code: 201,
 			body: `{"body": "A good chirp"}`,
-			want: `{"body":"A good chirp","id":1}`,
+			want: `{"body":"A good chirp","id":1,"author_id":1}`,
 		},
 		{
 			code: 201,
 			body: `{"body": "A decent chirp, chirped by fornax (not Fornax)"}`,
-			want: `{"body":"A decent chirp, chirped by **** (not ****)","id":2}`,
+			want: `{"body":"A decent chirp, chirped by **** (not ****)","id":2,"author_id":1}`,
 		},
 		{
 			code: 400,
@@ -59,7 +76,7 @@ func TestPostChirpHandler(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("POST", "http://chirpy.com", strings.NewReader(c.body))
-
+			req.Header.Add("Authorization", "Bearer "+token)
 			cfg.postChirpHandler(w, req)
 
 			resp, _ := io.ReadAll(w.Body)
