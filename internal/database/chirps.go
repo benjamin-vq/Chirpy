@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"github.com/benjamin-vq/chirpy/internal/assert"
 	"log"
@@ -12,6 +13,9 @@ type Chirp struct {
 	AuthorId int    `json:"author_id"`
 }
 
+var ChirpNotExists = errors.New("chirp does not exist")
+var IncorrectAuthorId = errors.New("user id does not match chirp author id")
+
 func (db *DB) CreateChirp(body string, authorId int) (Chirp, error) {
 
 	//assert.That(body != "", "Chirp body can not be empty")
@@ -22,7 +26,15 @@ func (db *DB) CreateChirp(body string, authorId int) (Chirp, error) {
 		return Chirp{}, err
 	}
 
-	chirpId := len(dbStructure.Chirps) + 1
+	// Ugly, but works. A better alternative would be to use another data structure for chirps
+	var chirpId int
+	for k, _ := range dbStructure.Chirps {
+		if k > chirpId {
+			chirpId = k
+		}
+	}
+	// We just assigned to the latest id, increment.
+	chirpId += 1
 	chirp := Chirp{
 		Body:     body,
 		Id:       chirpId,
@@ -72,4 +84,34 @@ func (db *DB) ChirpById(id int) (Chirp, error) {
 	}
 
 	return chirp, nil
+}
+
+func (db *DB) DeleteChirpById(chirpId, userId int) error {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		log.Printf("Could not load database file to delete chirp: %q", err)
+		return err
+	}
+
+	chirp, exists := dbStructure.Chirps[chirpId]
+	if !exists {
+		log.Printf("Could not delete chirp with id %d because it does not exist", chirpId)
+		return ChirpNotExists
+	}
+
+	if chirp.AuthorId != userId {
+		log.Printf("Chirp author id (%d) does not match user id (%d)", chirp.AuthorId, userId)
+		return IncorrectAuthorId
+	}
+
+	delete(dbStructure.Chirps, chirpId)
+	log.Printf("Deleted chirp with author id %d from database", userId)
+
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		log.Printf("Could not write database file to delete chirp: %q", err)
+		return err
+	}
+
+	return nil
 }
