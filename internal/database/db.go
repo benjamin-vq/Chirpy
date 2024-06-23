@@ -44,7 +44,7 @@ func (db *DB) ensureDB() error {
 			Users:  make(map[int]User),
 		}
 		err := db.writeDB(dbStructure)
-		assert.That(err == nil, "Database could not be initialized: %q", err)
+		assert.NoError(err, "Database could not be initialized: %q", err)
 		return nil
 	}
 

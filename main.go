@@ -28,6 +28,7 @@ const (
 	getChirpIdPath   = "GET /api/chirps/{chirpId}"
 	postUsersPath    = "POST /api/users"
 	loginPath        = "POST /api/login"
+	putUsersPath     = "PUT /api/users"
 )
 
 var debug = flag.Bool("debug", false, "Start on debug mode")
@@ -42,14 +43,14 @@ func setupFlags() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
-	if *debug {
+	if debug != nil && *debug {
 		log.Printf("[DEBUG] Deleting database file to start with a fresh one")
 		err := os.Remove(dbFilename)
 		assert.That(err == nil || errors.Is(err, os.ErrNotExist), "[DEBUG] Could not delete database file: %q", err)
 	}
 
 	err := godotenv.Load()
-	assert.That(err == nil, "Could not load environment variables")
+	assert.NoError(err, "Could not load environment variables")
 }
 func main() {
 	setupFlags()
@@ -81,6 +82,7 @@ func main() {
 	mux.HandleFunc(getChirpIdPath, apiConfig.chirpIdGetHandler)
 	mux.HandleFunc(postUsersPath, apiConfig.postUsersHandler)
 	mux.HandleFunc(loginPath, apiConfig.loginPostHandler)
+	mux.HandleFunc(putUsersPath, apiConfig.putUsersHandler)
 
 	log.Printf("Registered file handler for dir %q on path %q", fsDir, fsPath)
 	log.Printf("Registered readiness endpoint on path %q", readinessPath)
@@ -90,6 +92,7 @@ func main() {
 	log.Printf("Registered GET chirps endpoint on path %q", getChirpPath)
 	log.Printf("Registered GET chirp by id endpoint on path %q", getChirpIdPath)
 	log.Printf("Registered POST users endpoint on path %q", postUsersPath)
+	log.Printf("Registered PUT users endpoint on path %q", putUsersPath)
 	log.Printf("Registered POST login endpoint on path %q", loginPath)
 
 	server := &http.Server{

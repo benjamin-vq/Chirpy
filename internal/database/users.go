@@ -7,15 +7,15 @@ import (
 )
 
 type User struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Id       int    `json:"id"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashedPassword"`
+	Id             int    `json:"id"`
 }
 
 var ErrEmailExists = errors.New("email already exists")
 var UserNotExists = errors.New("user does not exist")
 
-func (db *DB) CreateUser(email, password string) (User, error) {
+func (db *DB) CreateUser(email, hashedPassword string) (User, error) {
 
 	assert.That(email != "", "email can not be empty")
 
@@ -35,7 +35,7 @@ func (db *DB) CreateUser(email, password string) (User, error) {
 	userId := len(dbStructure.Users) + 1
 	user := User{
 		email,
-		password,
+		hashedPassword,
 		userId,
 	}
 
@@ -66,4 +66,43 @@ func (db *DB) UserByEmail(email string) (User, error) {
 	}
 
 	return User{}, UserNotExists
+}
+
+func (db *DB) UserById(id int) (User, error) {
+
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		log.Printf("Could not load database to find a user by id: %q", err)
+	}
+
+	user, exists := dbStructure.Users[id]
+	if !exists {
+		log.Printf("User with id %d does not exist", id)
+		return User{}, err
+	}
+
+	return user, nil
+}
+
+func (db *DB) UpdateUser(user *User) error {
+	assert.That(user != nil, "Attempting to update nil user")
+
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		log.Printf("Could not load database to find a user by id: %q", err)
+		return err
+	}
+
+	if _, exists := dbStructure.Users[user.Id]; !exists {
+		return UserNotExists
+	}
+
+	dbStructure.Users[user.Id] = *user
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Succesfully updated user in database")
+	return nil
 }

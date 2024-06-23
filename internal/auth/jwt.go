@@ -1,24 +1,24 @@
 package auth
 
 import (
+	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
-	"os"
 	"strconv"
 	"time"
 )
 
-func CreateJwt(expiration time.Duration, userId int) (string, error) {
+func CreateJwt(expiration time.Duration, userId int, jwtSecret string) (string, error) {
 
 	if expiration == 0 || expiration > 24*time.Hour {
 		log.Printf("Jwt creation received an invalid expiration: %d. Defaulting to 24 hours", expiration)
 		expiration = 24 * time.Hour
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	issuedAt := jwt.NewNumericDate(now)
-	expiresAt := jwt.NewNumericDate(issuedAt.Add(expiration))
+	expiresAt := jwt.NewNumericDate(now.Add(expiration))
 
 	claims := jwt.RegisteredClaims{
 		Issuer:    "chirpy",
@@ -29,7 +29,6 @@ func CreateJwt(expiration time.Duration, userId int) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	jwtSecret := os.Getenv("JWT_SECRET")
 	signedJwt, err := token.SignedString([]byte(jwtSecret))
 
 	if err != nil {
@@ -39,4 +38,40 @@ func CreateJwt(expiration time.Duration, userId int) (string, error) {
 	log.Printf("Issued a new token at %v. Expires at %v", issuedAt, expiresAt)
 
 	return signedJwt, nil
+}
+
+func ValidateToken(token, jwtSecret string) (string, error) {
+
+	claims := jwt.RegisteredClaims{}
+	parsedJwt, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (any, error) {
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil {
+		log.Printf("Could not parse token: %q", err)
+		return "", err
+	}
+
+	if !parsedJwt.Valid {
+		log.Printf("Parsed JWT is invalid")
+		return "", errors.New("invalid token")
+	}
+
+	subject, err := parsedJwt.Claims.GetSubject()
+	if err != nil {
+		log.Printf("Could not get subject in parsed token: %q", err)
+		return "", err
+	}
+
+	issuer, err := parsedJwt.Claims.GetIssuer()
+	if err != nil {
+		log.Printf("Could not get issuer: %q", err)
+		return "", err
+	}
+	if issuer != "chirpy" {
+		log.Printf("Invalid issuer: %s", issuer)
+		return "", nil
+	}
+
+	return subject, nil
 }

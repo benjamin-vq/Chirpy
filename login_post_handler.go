@@ -46,13 +46,14 @@ func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = auth.ComparePasswordHash(user.Password, loginParams.Password)
+	err = auth.ComparePasswordHash(user.HashedPassword, loginParams.Password)
 	if err != nil {
+		log.Printf("Received password does not match")
 		respondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	jwt, err := auth.CreateJwt(time.Duration(loginParams.Expires), user.Id)
+	jwt, err := auth.CreateJwt(time.Duration(loginParams.Expires)*time.Second, user.Id, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not login")
 		return

@@ -8,3 +8,9 @@ func That(condition bool, message string, args ...any) {
 		log.Panicf(message, args)
 	}
 }
+
+func NoError(err error, message string, args ...any) {
+	if err != nil {
+		log.Panicf(message, args)
+	}
+}

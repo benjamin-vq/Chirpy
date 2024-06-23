@@ -16,15 +16,14 @@ import (
 func TestLoginPostHandler(t *testing.T) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	t.Setenv("JWT_SECRET", "dGVzdA==")
-
 	db, err := database.NewDB(testDbName)
 	if err != nil {
 		log.Fatalf("Could not create new database for test: %q", err)
 	}
 
 	cfg := apiConfig{
-		DB: db,
+		DB:        db,
+		jwtSecret: "dGVzdA==",
 	}
 
 	users := []struct {
