@@ -76,6 +76,7 @@ func (cfg *apiConfig) loginPostHandler(w http.ResponseWriter, r *http.Request) {
 		User: User{
 			user.Email,
 			user.Id,
+			user.IsChirpyRed,
 		},
 		Token:        jwt,
 		RefreshToken: rt,

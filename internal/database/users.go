@@ -10,6 +10,7 @@ type User struct {
 	Email          string `json:"email"`
 	HashedPassword string `json:"hashedPassword"`
 	Id             int    `json:"id"`
+	IsChirpyRed    bool   `json:"is_chirpy_red"`
 }
 
 var ErrEmailExists = errors.New("email already exists")
@@ -34,9 +35,10 @@ func (db *DB) CreateUser(email, hashedPassword string) (User, error) {
 
 	userId := len(dbStructure.Users) + 1
 	user := User{
-		email,
-		hashedPassword,
-		userId,
+		Email:          email,
+		HashedPassword: hashedPassword,
+		Id:             userId,
+		IsChirpyRed:    false,
 	}
 
 	assert.That(dbStructure.Users != nil, "Users map should be initialized")
@@ -78,7 +80,7 @@ func (db *DB) UserById(id int) (User, error) {
 	user, exists := dbStructure.Users[id]
 	if !exists {
 		log.Printf("User with id %d does not exist", id)
-		return User{}, err
+		return User{}, UserNotExists
 	}
 
 	return user, nil
@@ -104,5 +106,30 @@ func (db *DB) UpdateUser(user *User) error {
 	}
 
 	log.Printf("Succesfully updated user in database")
+	return nil
+}
+
+func (db *DB) MakeChirpyRed(userId int) error {
+	assert.That(userId != 0, "Attempting to upgrade invalid user id to chirpy red")
+
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		log.Printf("Could not load database to find a user by id: %q", err)
+		return err
+	}
+
+	user, exists := dbStructure.Users[userId]
+	if !exists {
+		return UserNotExists
+	}
+	user.IsChirpyRed = true
+	dbStructure.Users[userId] = user
+
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Succesfully upgraded user with id %d to Chirpy Red", userId)
 	return nil
 }

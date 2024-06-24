@@ -33,12 +33,12 @@ func TestPostUsersHandler(t *testing.T) {
 		{
 			code: 201,
 			body: `{"email": "myemail@chirpy.com", "password": "test1234"}`,
-			want: `{"email":"myemail@chirpy.com","id":1}`,
+			want: `{"email":"myemail@chirpy.com","id":1,"is_chirpy_red":false}`,
 		},
 		{
 			code: 201,
 			body: `{"email": "another@email.io", "id": 5958, "password": "1234567890"}`,
-			want: `{"email":"another@email.io","id":2}`,
+			want: `{"email":"another@email.io","id":2,"is_chirpy_red":false}`,
 		},
 		{
 			code: 400,

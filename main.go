@@ -32,6 +32,7 @@ const (
 	postRefreshPath   = "POST /api/refresh"
 	postRevokePath    = "POST /api/revoke"
 	deleteChirpIdPath = "DELETE /api/chirps/{chirpId}"
+	postPolkaPath     = "POST /api/polka/webhooks"
 )
 
 var debug = flag.Bool("debug", false, "Start on debug mode")
@@ -40,6 +41,7 @@ type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
 	jwtSecret      string
+	polkaApiKey    string
 }
 
 func setupFlags() {
@@ -64,12 +66,14 @@ func main() {
 		log.Fatalf("Error creating database: %q", err)
 	}
 	jwtSecret := os.Getenv("JWT_SECRET")
+	polkaApiKey := os.Getenv("POLKA_API_KEY")
 	assert.That(jwtSecret != "", "Jwt Secret should not be empty")
 
 	apiConfig := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
 		jwtSecret:      jwtSecret,
+		polkaApiKey:    polkaApiKey,
 	}
 
 	mux := http.NewServeMux()
@@ -89,6 +93,7 @@ func main() {
 	mux.HandleFunc(postRefreshPath, apiConfig.postRefreshHandler)
 	mux.HandleFunc(postRevokePath, apiConfig.postRevokeHandler)
 	mux.HandleFunc(deleteChirpIdPath, apiConfig.deleteChirpIdHandler)
+	mux.HandleFunc(postPolkaPath, apiConfig.postPolkaHandler)
 
 	log.Printf("Registered file handler for dir %q on path %q", fsDir, fsPath)
 	log.Printf("Registered readiness endpoint on path %q", readinessPath)
@@ -103,6 +108,7 @@ func main() {
 	log.Printf("Registered POST refresh endpoint on path %q", postRefreshPath)
 	log.Printf("Registered POST revoke endpoint on path %q", postRevokePath)
 	log.Printf("Registered DELETE chirp by id endpoint on path %q", deleteChirpIdPath)
+	log.Printf("Registered POST polka webhook endpoint on path %q", postPolkaPath)
 
 	server := &http.Server{
 		Addr:    port,

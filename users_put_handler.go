@@ -55,7 +55,7 @@ func (cfg *apiConfig) putUsersHandler(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "An internal error occurred.")
 	}
 
-	err = cfg.DB.UpdateUser(&database.User{params.Email, newHashedPassword, id})
+	err = cfg.DB.UpdateUser(&database.User{Email: params.Email, HashedPassword: newHashedPassword, Id: id})
 	if err != nil {
 		log.Printf("Could not update user: %q", err)
 		respondWithError(w, http.StatusInternalServerError, "Error updating user")

@@ -41,7 +41,7 @@ func TestPutUsersHandler(t *testing.T) {
 	err = decoder.Decode(&loginResp)
 
 	token, _ := loginResp["token"]
-	want := `{"email":"updated@user.com","id":1}`
+	want := `{"email":"updated@user.com","id":1,"is_chirpy_red":false}`
 
 	putW := httptest.NewRecorder()
 	putReq := httptest.NewRequest("PUT", "/api/users", strings.NewReader(want))
