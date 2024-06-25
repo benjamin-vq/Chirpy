@@ -1,9 +1,12 @@
 package main
 
 import (
-	"encoding/json"
+	"cmp"
+	"github.com/benjamin-vq/chirpy/internal/database"
 	"log"
 	"net/http"
+	"slices"
+	"strconv"
 )
 
 func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,22 +19,43 @@ func (cfg *apiConfig) getChirpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(chirps)
+	idParamString := r.URL.Query().Get("author_id")
+	sortParamString := r.URL.Query().Get("sort")
+	var authorIdParam int
+	if idParamString != "" {
+		authorIdParam, err = strconv.Atoi(idParamString)
+		if err != nil {
+			log.Printf("Received an invalid author id as query param: %s", idParamString)
+			respondWithError(w, http.StatusBadRequest, "Invalid author id")
+			return
+		}
+	}
 
-	if err != nil {
-		log.Printf("Unable to unmarshal chirp list: %q", err)
-		respondWithError(w, 500, "Could not to retrieve chirps")
-		return
+	filteredChirps := make([]database.Chirp, 0)
+	for _, chirp := range chirps {
+		// Continue to append chirps that don't need to be filtered
+		if authorIdParam != 0 && chirp.AuthorId != authorIdParam {
+			continue
+		}
+		filteredChirps = append(filteredChirps, chirp)
 	}
 
 	var httpStatus int
-	if len(chirps) != 0 {
+	if len(filteredChirps) != 0 {
 		httpStatus = http.StatusOK
 	} else {
 		httpStatus = http.StatusNoContent
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(httpStatus)
-	w.Write(data)
+	if sortParamString == "desc" {
+		slices.SortFunc(filteredChirps, func(a, b database.Chirp) int {
+			return cmp.Compare(b.Id, a.Id)
+		})
+	} else {
+		slices.SortFunc(filteredChirps, func(a, b database.Chirp) int {
+			return cmp.Compare(a.Id, b.Id)
+		})
+	}
+
+	respondWithJSON(w, httpStatus, filteredChirps)
 }
